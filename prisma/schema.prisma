@@ -4,36 +4,83 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Ensure your Neon/Postgres DB URL is in .env
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String    @id @default(cuid())
+  userId             String
+  providerType       String
+  providerId         String
+  providerAccountId  String
+  refreshToken       String?
+  accessToken        String?
+  accessTokenExpires DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  expires      DateTime
+  sessionToken String   @unique
+  accessToken  String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id         String   @id @default(uuid())
-  name       String?
-  email      String   @unique
-  createdAt  DateTime @default(now())
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  chatSessions  ChatSession[] 
 
-  chatSessions ChatSession[] // One user can have multiple chat sessions
+  @@index([id]) // Index for better performance
+}
+
+model VerificationRequest {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, token])
 }
 
 model ChatSession {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
   startedAt  DateTime @default(now())
-  endedAt    DateTime?
+  endedAt    DateTime? 
+  messages   Message[]
+  apiLogs    ApiLog[]
 
-  messages   Message[]  // One chat session has multiple messages
-  apiLogs    ApiLog[]   // Logs for API interactions
+  @@index([userId])
 }
 
 model Message {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId  String
   sender     SenderType
   content    String
   createdAt  DateTime @default(now())
+
+  @@index([sessionId])
 }
 
 enum SenderType {
@@ -42,11 +89,13 @@ enum SenderType {
 }
 
 model ApiLog {
-  id            String   @id @default(uuid())
+  id            String   @id @default(cuid())
   session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId     String
   requestPayload Json
   responsePayload Json
   responseTimeMs Int
   createdAt      DateTime @default(now())
+
+  @@index([sessionId])
 }
