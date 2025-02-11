@@ -32,8 +32,8 @@ const ChatRoom: React.FC = () => {
         <div className="flex h-screen">
             <Background children={undefined}/>
             <main className="flex-1 p-4">
-                <h2 className="text-xl font-semibold mb-4">Chat Room</h2>
-                <div className="border border-gray-300 p-4 h-[80vh] overflow-y-auto text-black">
+                <h2 className="text-xl font-semibold mb-4">Chat with {messages[0].sender}</h2>
+                <div className="border border-gray-300 p-4 h-[80vh] overflow-y-auto text-black bg-slate-700">
                     {messages.map((message) => (
                         <div 
                             key={message.id} 
@@ -59,7 +59,7 @@ const ChatRoom: React.FC = () => {
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="flex-1 p-2 border border-gray-300 mr-2 text-black" 
+                        className="flex-1 p-2 border border-gray-300 mr-2 text-black rounded-sm" 
                     />
                     <button 
                         onClick={sendMessage}

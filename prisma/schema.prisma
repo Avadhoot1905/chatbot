@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Ensure your Neon/Postgres DB URL is in .env
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String?
+  email      String   @unique
+  createdAt  DateTime @default(now())
+
+  chatSessions ChatSession[] // One user can have multiple chat sessions
+}
+
+model ChatSession {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  startedAt  DateTime @default(now())
+  endedAt    DateTime?
+
+  messages   Message[]  // One chat session has multiple messages
+  apiLogs    ApiLog[]   // Logs for API interactions
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId  String
+  sender     SenderType
+  content    String
+  createdAt  DateTime @default(now())
+}
+
+enum SenderType {
+  user
+  bot
+}
+
+model ApiLog {
+  id            String   @id @default(uuid())
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId     String
+  requestPayload Json
+  responsePayload Json
+  responseTimeMs Int
+  createdAt      DateTime @default(now())
+}
