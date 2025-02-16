@@ -1,21 +1,25 @@
 import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { adapter } from "next/dist/server/web/adapter";
 import { PrismaClient } from "@prisma/client";
 
-const Prisma = new PrismaClient();
+const prisma = new PrismaClient();
+
+// Ensure environment variables exist
+if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    throw new Error("Missing GitHub OAuth credentials");
+}
 
 export const authOptions = {
-    adapter: PrismaAdapter(Prisma),
+    adapter: PrismaAdapter(prisma),
     providers: [
         GitHubProvider({
-            clientId: process.env.GITHUB_CLIENT_ID ?? '',
-            clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
         }),
     ],
 };
 
-export const handler = NextAuth(authOptions);
+const handler = NextAuth(authOptions);
 
-export { handler as GET , handler as POST };
+export { handler as GET, handler as POST };
